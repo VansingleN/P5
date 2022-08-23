@@ -29,7 +29,14 @@ function showProducts(products) {
     article.appendChild(image)
     article.appendChild(title)
     article.appendChild(paragraph)
+
+    const url = new URL(anchor.href);
+    const getId = url.searchParams.get("id");
+    console.log(getId);
+    
     
 }
 }
+
+
 
