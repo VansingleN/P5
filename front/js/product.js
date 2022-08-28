@@ -15,6 +15,7 @@ function showImage(res) {
 
     const item__img = document.querySelector(".item__img");
     const image = document.createElement("img")
+    image.classList = "productImage"
     image.src = res.imageUrl
     image.alt = res.altTxt
     item__img.appendChild(image)
@@ -48,4 +49,47 @@ function showColors(res) {
     })
 }
 
+function validatingCartAndStoringValues() {
+
+    const addToCart = document.querySelector("#addToCart")
+    const cartLink = document.querySelector("#cartLink")
+
+    addToCart.addEventListener("click", () => {
+
+        const color = document.querySelector("#colors").value
+        const quantity = document.querySelector("#quantity").value
+        const id = window.location.search
+        const urlSearchParams = new URLSearchParams(id)
+        const paramId = urlSearchParams.get("id")
+        let price = document.querySelector("#price").innerHTML * quantity
+        const item__img = document.querySelector(".productImage").src
+        const name = document.querySelector("#title").innerHTML
+
+        const values = {
+            image: item__img,
+            id: paramId,
+            price: price,
+            color: color,
+            quantity: quantity,
+            name: name,
+        }        
+        const idc = paramId + color
+        // let i = 0
+        if (color == "" || quantity == 0) {
+            alert('Please choose a color and a quantity')
+            cartLink.removeAttribute("href")
+        }
+        else {
+            cartLink.href = "./cart.html"
+            localStorage.setItem(idc, JSON.stringify(values))
+            // i++
+        }
+
+        // console.log(i)
+    })
+}
+
 getDataFromId()
+validatingCartAndStoringValues()
+
+
