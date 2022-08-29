@@ -70,22 +70,31 @@ function validatingCartAndStoringValues() {
             id: paramId,
             price: price,
             color: color,
-            quantity: quantity,
+            quantity: Number(quantity),
             name: name,
-        }        
+        }
         const idc = paramId + color
-        // let i = 0
+
         if (color == "" || quantity == 0) {
             alert('Please choose a color and a quantity')
-            cartLink.removeAttribute("href")
-        }
-        else {
-            cartLink.href = "./cart.html"
-            localStorage.setItem(idc, JSON.stringify(values))
-            // i++
         }
 
-        // console.log(i)
+        else {
+            let json = localStorage.getItem(idc)
+
+            if (json != null) {
+                currentValue = JSON.parse(json)
+            } else {
+                currentValue = undefined
+            }
+            if (currentValue == undefined) {
+                localStorage.setItem(idc, JSON.stringify(values))
+            }
+            else {
+                currentValue.quantity = currentValue.quantity + values.quantity
+                localStorage.setItem(idc, JSON.stringify(currentValue))
+            }
+        }
     })
 }
 

@@ -16,15 +16,14 @@ function displayDescription(parsedItem, i) {
     name.innerHTML = parsedItem.name
     const color = document.createElement("p")
     color.innerHTML = "Couleur : " + parsedItem.color
-    const price = document.createElement("p")
-    price.innerHTML = "Prix : " + parsedItem.price + " €"
+    let price = document.createElement("p")
 
     cart__item__content__description.append(name, color, price)
 
-    injectInputContainer(parsedItem, i, cart__item__content)
+    injectInputContainer(parsedItem, i, cart__item__content, price)
 }
 
-function injectInputContainer(parsedItem, i, cart__item__content) {
+function injectInputContainer(parsedItem, i, cart__item__content, price) {
     const divSettings = document.createElement("div")
     divSettings.classList = "cart__item__content__settings"
     cart__item__content.appendChild(divSettings)
@@ -37,12 +36,12 @@ function injectInputContainer(parsedItem, i, cart__item__content) {
     quantity_paragraph.innerHTML = "Quantité :"
     divQuantity.appendChild(quantity_paragraph)
 
-    displayQuantity(divQuantity, parsedItem)
+    displayQuantity(divQuantity, parsedItem, price)
     displayDeleteButton(i, cart__item__content__settings)
 }
 
-function displayQuantity(divQuantity, parsedItem) {
-    const quantity = document.createElement("input")
+function displayQuantity(divQuantity, parsedItem, price) {
+    let quantity = document.createElement("input")
     quantity.type = "number"
     quantity.classList = "itemQuantity"
     quantity.name = "itemQuantity"
@@ -50,6 +49,20 @@ function displayQuantity(divQuantity, parsedItem) {
     quantity.max = "100"
     quantity.value = parsedItem.quantity
     divQuantity.appendChild(quantity)
+
+    updatePrice(quantity, price, parsedItem)
+    // let totalQuantity = document.querySelector("#totalQuantity")
+    // parsedItem.forEach(element => {
+    //     const totalPrice = element.quantity * element.price
+    //     console.log(totalPrice);
+    // }); 
+}
+
+function updatePrice(quantity, price, parsedItem) {
+    price.innerHTML = "Prix : " + quantity.value * parsedItem.price + " €"
+    quantity.addEventListener('change', function () {
+        price.innerHTML = "Prix : " + quantity.value * parsedItem.price + " €"
+    })
 }
 
 function displayDeleteButton(i, cart__item__content__settings) {
@@ -64,13 +77,21 @@ function displayDeleteButton(i, cart__item__content__settings) {
 }
 
 function loopOverLocalStorage() {
+    let cart = []
     for (let i = 0; i < localStorage.length; i++) {
         const getItem = localStorage.getItem(localStorage.key(i));
         const parsedItem = JSON.parse(getItem)
         displayImage(parsedItem, i)
         displayDescription(parsedItem, i)
+        cart.push(parsedItem)
     }
+    console.log(cart);
 }
 
 loopOverLocalStorage()
+
+
+
+
+
 
