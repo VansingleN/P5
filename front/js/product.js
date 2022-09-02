@@ -27,7 +27,11 @@ function showTitleAndPrice(res) {
     const title = document.querySelector("#title")
     title.innerHTML = res.name
     const price = document.querySelector("#price")
-    price.innerHTML = res.price
+    const quantity = document.querySelector("#quantity")
+    price.innerHTML = quantity.value * res.price
+    quantity.addEventListener('change', function () {
+        price.innerHTML = quantity.value * res.price
+    })
     return res
 }
 
@@ -52,8 +56,6 @@ function showColors(res) {
 function validatingCartAndStoringValues() {
 
     const addToCart = document.querySelector("#addToCart")
-    const cartLink = document.querySelector("#cartLink")
-
     addToCart.addEventListener("click", () => {
 
         const color = document.querySelector("#colors").value
@@ -61,14 +63,14 @@ function validatingCartAndStoringValues() {
         const id = window.location.search
         const urlSearchParams = new URLSearchParams(id)
         const paramId = urlSearchParams.get("id")
-        let price = document.querySelector("#price").innerHTML * quantity
+        // let price = document.querySelector("#price").innerHTML * quantity
         const item__img = document.querySelector(".productImage").src
         const name = document.querySelector("#title").innerHTML
 
         const values = {
             image: item__img,
             id: paramId,
-            price: price,
+            // price: price,
             color: color,
             quantity: Number(quantity),
             name: name,

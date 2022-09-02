@@ -5,7 +5,7 @@ function displayImage(parsedItem) {
     cart__item__img.appendChild(image)
 }
 
-function displayDescription(parsedItem, i) {
+function displayDescription(parsedItem, i, cart) {
     const cart__item__content = document.querySelector(".cart__item__content")
     const description = document.createElement("div")
     description.classList = "cart__item__content__description"
@@ -17,13 +17,17 @@ function displayDescription(parsedItem, i) {
     const color = document.createElement("p")
     color.innerHTML = "Couleur : " + parsedItem.color
     let price = document.createElement("p")
+    price.classList = "pagePrices"
+
+    
 
     cart__item__content__description.append(name, color, price)
+    
 
-    injectInputContainer(parsedItem, i, cart__item__content, price)
+    injectInputContainer(parsedItem, i, cart__item__content, price, cart)
 }
 
-function injectInputContainer(parsedItem, i, cart__item__content, price) {
+function injectInputContainer(parsedItem, i, cart__item__content, price, cart) {
     const divSettings = document.createElement("div")
     divSettings.classList = "cart__item__content__settings"
     cart__item__content.appendChild(divSettings)
@@ -36,11 +40,11 @@ function injectInputContainer(parsedItem, i, cart__item__content, price) {
     quantity_paragraph.innerHTML = "Quantité :"
     divQuantity.appendChild(quantity_paragraph)
 
-    displayQuantity(divQuantity, parsedItem, price)
+    displayQuantity(divQuantity, parsedItem, price, i, cart)
     displayDeleteButton(i, cart__item__content__settings)
 }
 
-function displayQuantity(divQuantity, parsedItem, price) {
+function displayQuantity(divQuantity, parsedItem, price, i, cart) {
     let quantity = document.createElement("input")
     quantity.type = "number"
     quantity.classList = "itemQuantity"
@@ -50,19 +54,22 @@ function displayQuantity(divQuantity, parsedItem, price) {
     quantity.value = parsedItem.quantity
     divQuantity.appendChild(quantity)
 
-    updatePrice(quantity, price, parsedItem)
-    // let totalQuantity = document.querySelector("#totalQuantity")
-    // parsedItem.forEach(element => {
-    //     const totalPrice = element.quantity * element.price
-    //     console.log(totalPrice);
-    // }); 
+    getPriceFromBackend(quantity, price, i, cart, parsedItem)
 }
 
-function updatePrice(quantity, price, parsedItem) {
-    price.innerHTML = "Prix : " + quantity.value * parsedItem.price + " €"
+function getPriceFromBackend(quantity, price, i, cart, parsedItem) {
+    fetch('http://localhost:3000/api/products')
+        .then((res) => res.json())
+        .then((res) => updatePrice(quantity, price, res, i, cart, parsedItem))
+}
+
+function updatePrice(quantity, price, res, i, cart, parsedItem) {
+    price.innerHTML = quantity.value * res[i].price
     quantity.addEventListener('change', function () {
-        price.innerHTML = "Prix : " + quantity.value * parsedItem.price + " €"
+        price.innerHTML = quantity.value * res[i].price
     })
+    
+    calculatingTotalPrice(cart, i, res, parsedItem, quantity, price)
 }
 
 function displayDeleteButton(i, cart__item__content__settings) {
@@ -77,18 +84,75 @@ function displayDeleteButton(i, cart__item__content__settings) {
 }
 
 function loopOverLocalStorage() {
-    let cart = []
+    
+    
     for (let i = 0; i < localStorage.length; i++) {
         const getItem = localStorage.getItem(localStorage.key(i));
         const parsedItem = JSON.parse(getItem)
-        displayImage(parsedItem, i)
-        displayDescription(parsedItem, i)
         cart.push(parsedItem)
+        displayImage(parsedItem, i)
+        displayDescription(parsedItem, i, cart)
+
     }
     console.log(cart);
 }
 
+function calculatingTotalPrice (cart, i, res, parsedItem, quantity, price) {
+    const totalPriceContainer = document.querySelector("#totalPrice")
+        totalPrice += parsedItem.quantity * res[i].price
+        // console.log(parsedItem.quantity);
+        // console.log(res[i].price);
+        // console.log(totalPrice); 
+    totalPriceContainer.innerHTML = totalPrice
+    priceModification(i, res, parsedItem, quantity, totalPriceContainer, price)
+}
+
+function priceModification (i, res, parsedItem, quantity, totalPriceContainer, price) {
+    // let pagePrices = document.querySelectorAll(".pagePrices")
+    console.log(Number(price.innerHTML));
+    
+    let input = document.querySelectorAll(".pagePrices").forEach(e => { 
+            // console.log(element.innerHTML);  
+    quantity.addEventListener('change', function (event) {
+        let value = event.target.value
+        const cartProduct = cart.find(
+            (element) =>
+            element.id === parsedItem.id &&
+            element.color === parsedItem.color
+            )
+            cartProduct.quantity = value
+            console.log(cartProduct);
+        let modifiedTotalPrice = 0
+        // console.log(quantity.value);
+        // console.log(modifiedTotalPrice);
+        // totalPriceContainer.innerHTML = quantity.value * res[i].price
+        modifiedTotalPrice += cart[i].quantity * e.innerHTML
+        totalPriceContainer.innerHTML = modifiedTotalPrice
+        // console.log(Number(price.innerHTML));
+        console.log(Number(e.innerHTML));
+    });
+    })}
+
+let totalPrice = 0
+
+let cart = []
 loopOverLocalStorage()
+
+
+
+  var liste = []; //Liste finale
+  var balises = document.getElementsByClassName('itemQuantity'); //Ici on utilise * pour toute les balises, mais si on cherchait que pour une balise en particulier ('a' par exemple), ça serait plus rapide car moins de balises à filtrer
+  for( var i=0; i<balises.length; ++i)
+  {
+    var b = balises[i];
+    if(b.className == 'itemQuantity')
+      liste.push(b);
+  }
+  
+
+
+
+
 
 
 
