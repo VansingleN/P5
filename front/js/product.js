@@ -63,14 +63,12 @@ function validatingCartAndStoringValues() {
         const id = window.location.search
         const urlSearchParams = new URLSearchParams(id)
         const paramId = urlSearchParams.get("id")
-        // let price = document.querySelector("#price").innerHTML * quantity
         const item__img = document.querySelector(".productImage").src
         const name = document.querySelector("#title").innerHTML
 
         const values = {
             image: item__img,
             id: paramId,
-            // price: price,
             color: color,
             quantity: Number(quantity),
             name: name,
