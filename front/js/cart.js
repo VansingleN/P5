@@ -1,4 +1,4 @@
-function injectArticle(parsedItem, i, cart) {
+function injectArticle(parsedItem, i) {
     const cart__item = document.createElement("article")
     cart__item.classList = "cart__item"
     cart__item.dataset.id = parsedItem.id
@@ -6,10 +6,10 @@ function injectArticle(parsedItem, i, cart) {
     const cart__items = document.querySelector("#cart__items")
     cart__items.appendChild(cart__item)
 
-    displayImage(parsedItem, i, cart, cart__item)
+    displayImage(parsedItem, i, cart__item)
 }
 
-function displayImage(parsedItem, i, cart, cart__item) {
+function displayImage(parsedItem, i, cart__item) {
     const div__cart__item__img = document.createElement("div")
     div__cart__item__img.classList = "cart__item__img"
     cart__item.appendChild(div__cart__item__img)
@@ -17,10 +17,10 @@ function displayImage(parsedItem, i, cart, cart__item) {
     image.src = parsedItem.image
     div__cart__item__img.appendChild(image)
 
-    displayDescription(parsedItem, i, cart, cart__item)
+    displayDescription(parsedItem, i, cart__item)
 }
 
-function displayDescription(parsedItem, i, cart, cart__item) {
+function displayDescription(parsedItem, i, cart__item) {
     const div__cart__item__content = document.createElement("div")
     div__cart__item__content.classList = "cart__item__content"
     cart__item.appendChild(div__cart__item__content)
@@ -36,10 +36,10 @@ function displayDescription(parsedItem, i, cart, cart__item) {
     let price = document.createElement("p")
     cart__item__content__description.append(name, color, price)
 
-    injectInputContainer(parsedItem, i, div__cart__item__content, price, cart)
+    injectInputContainer(parsedItem, i, div__cart__item__content, price)
 }
 
-function injectInputContainer(parsedItem, i, div__cart__item__content, price, cart) {
+function injectInputContainer(parsedItem, i, div__cart__item__content, price) {
     const divSettings = document.createElement("div")
     divSettings.classList = "cart__item__content__settings"
     div__cart__item__content.appendChild(divSettings)
@@ -52,7 +52,7 @@ function injectInputContainer(parsedItem, i, div__cart__item__content, price, ca
     divQuantity.appendChild(quantity_paragraph)
 
     displayDeleteButton(i, cart__item__content__settings, parsedItem)
-    displayQuantity(divQuantity, parsedItem, price, i, cart)
+    displayQuantity(divQuantity, parsedItem, price, i)
 }
 
 function displayDeleteButton(i, cart__item__content__settings, parsedItem) {
@@ -71,11 +71,11 @@ function deleteProduct(parsedItem) {
     deleteProductFromCart(parsedItem)
     deleteProductFromStorage(parsedItem)
     deleteProductFromPage(parsedItem)
-    calculatingTotalArticles()
+    displayTotalProducts()
 }
 
 function deleteProductFromCart(parsedItem) {
-    const productDeletion = cart.find(product => product.id === parsedItem.id && product.color === parsedItem.color)
+    const productDeletion = cart.findIndex(product => product.id === parsedItem.id && product.color === parsedItem.color)
     console.log("itemtodelete", productDeletion);
     cart.splice(productDeletion, 1)
 }
@@ -88,7 +88,7 @@ function deleteProductFromPage(parsedItem) {
     productToDelete.remove()
 }
 
-function displayQuantity(divQuantity, parsedItem, price, i, cart) {
+function displayQuantity(divQuantity, parsedItem, price, i) {
     let quantity = document.createElement("input")
     quantity.type = "number"
     quantity.classList = "itemQuantity"
@@ -96,76 +96,128 @@ function displayQuantity(divQuantity, parsedItem, price, i, cart) {
     quantity.min = "1"
     quantity.max = "100"
     quantity.value = cart[i].quantity
-    quantity.addEventListener("change", () => totalArticlesModification(parsedItem.id, Number(quantity.value), i))
+    quantity.addEventListener("change", () => updateTotalProducts(parsedItem.id, parsedItem.color, Number(quantity.value), i))
     divQuantity.appendChild(quantity)
 
-    getPriceFromBackend(quantity, price, i, cart, parsedItem)
+    getPriceFromBackend(quantity, price, i, parsedItem)
 }
 
-function getPriceFromBackend(quantity, price, i, cart, parsedItem) {
+function getPriceFromBackend(quantity, price, i, parsedItem) {
     fetch('http://localhost:3000/api/products')
         .then((res) => res.json())
-        .then((res) => updatePrice(quantity, price, res, i, cart, parsedItem))
+        .then((res) => displayAllPrices(quantity, price, res, i, parsedItem))
 }
 
-function updatePrice(quantity, price, res, i, cart, parsedItem) {
-    price.innerHTML = "Prix : " + quantity.value * res[i].price + " €"
-    quantity.addEventListener('change', function () {
-        price.innerHTML = "Prix : " + quantity.value * res[i].price + " €"
-    })
-    calculatingTotalArticles()
-    calculatingTotalPrice(cart, i, res, parsedItem, quantity)
-    updateQuantityInLocalstorage(parsedItem, quantity)
-}
-
-function calculatingTotalArticles() {
-    const totalQuantity = document.querySelector("#totalQuantity")
-    const total = cart.reduce((total, parsedItem) => total + Number(parsedItem.quantity), 0)
-    totalQuantity.innerHTML = total
-}
-
-function totalArticlesModification(id, quantityValue) {
-    const modifyInCart = cart.find((product) => product.id === id)
-    modifyInCart.quantity = Number(quantityValue)
-
-    calculatingTotalArticles()
-}
-
-function calculatingTotalPrice(cart, i, res, parsedItem, quantity) {
+function displayAllPrices(quantity, price, res, i, parsedItem) {
+    const productWithPriceFromBack = cart.find(product => product.id === parsedItem.id && product.color === parsedItem.color)
+    productWithPriceFromBack.price = res.find(product => product._id === parsedItem.id).price
+    console.log(productWithPriceFromBack);
+    price.innerHTML = "Prix : " + quantity.value * cart[i].price + " €"
     const totalPriceContainer = document.querySelector("#totalPrice")
-    totalPrice += parsedItem.quantity * res[i].price
+    totalPrice += parsedItem.quantity * cart[i].price
     totalPriceContainer.innerHTML = totalPrice
 
-    totalPriceModification(i, res, parsedItem, quantity, totalPriceContainer)
+    displayTotalProducts()
+    updateAllPrices(quantity, price, i)
 }
 
-function totalPriceModification(i, res, parsedItem, quantity, totalPriceContainer) {
-    const productWithPriceFromBack = cart.find(product => product.id === parsedItem.id && product.color === parsedItem.color)
-    productWithPriceFromBack.price = (res[i].price)
+function updateAllPrices(quantity, price, i) {
+
     quantity.addEventListener('change', function () {
+        const totalPriceContainer = document.querySelector("#totalPrice")
+        price.innerHTML = "Prix : " + quantity.value * cart[i].price + " €"
         let modifiedTotalPrice = 0
         cart.forEach((p) => modifiedTotalPrice += (p.price * p.quantity))
         totalPriceContainer.innerHTML = modifiedTotalPrice
     })
 }
 
-function updateQuantityInLocalstorage(parsedItem, quantity) {
-    quantity.addEventListener("change", function() {
-    const updatedQuantity = JSON.stringify(parsedItem)
-    localStorage.setItem(parsedItem.id, updatedQuantity)
-    })
+function displayTotalProducts() {
+    const totalQuantity = document.querySelector("#totalQuantity")
+    const total = cart.reduce((total, parsedItem) => total + Number(parsedItem.quantity), 0)
+    totalQuantity.innerHTML = total
 }
 
+function updateTotalProducts(id, color, quantityValue) {
+    const modifyInCart = cart.find((product) => product.id === id && product.color === color)
+    modifyInCart.quantity = Number(quantityValue)
+
+    displayTotalProducts()
+}
+
+
+function getUserDataAndVerify() {
+    const order = document.querySelector("#order")
+    order.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (cart.length === 0) {
+            alert("Le panier est vide")
+            return
+        }
+
+        const userData = {
+            firstName: document.querySelector("#firstName").value,
+            lastName: document.querySelector("#lastName").value,
+            address: document.querySelector("#address").value,
+            city: document.querySelector("#city").value,
+            email: document.querySelector("#email").value,
+        }
+
+        if (userData.firstName === "") {
+            const firstNameErrorMsg = document.querySelector("#firstNameErrorMsg");
+            firstNameErrorMsg.innerHTML = "Veuillez entrer votre prénom"
+        }
+        else {
+            firstNameErrorMsg.innerHTML = ""
+        }
+        if (userData.lastName === "") {
+            const lastNameErrorMsg = document.querySelector("#lastNameErrorMsg");
+            lastNameErrorMsg.innerHTML = "Veuillez entrer votre nom"
+        }
+        else {
+            lastNameErrorMsg.innerHTML = ""
+        }
+        if (userData.address === "") {
+            const addressErrorMsg = document.querySelector("#addressErrorMsg");
+            addressErrorMsg.innerHTML = "Veuillez entrer votre adresse"
+        }
+        else {
+            addressErrorMsg.innerHTML = ""
+        }
+        const cityVerification = /^[^!¡?÷¿/+=@#£¤µ¨§$%&*(){}|~<>;:[\]]+$/
+        if (cityVerification.test(userData.city) === false) {
+            const cityErrorMsg = document.querySelector("#cityErrorMsg");
+            cityErrorMsg.innerHTML = "Veuillez entrer un nom de ville valide"
+        }
+        else {
+            cityErrorMsg.innerHTML = ""
+        }
+        const emailVerification = /.+@.+\..+/
+        if (emailVerification.test(userData.email) === false) {
+            const emailErrorMsg = document.querySelector("#emailErrorMsg");
+            emailErrorMsg.innerHTML = "Veuillez entrer une adresse mail valide"
+        }
+        else {
+            emailErrorMsg.innerHTML = ""
+        }
+        if (userData.firstName === "" || userData.lastName === "" || userData.address === "" || cityVerification.test(userData.city) === false || emailVerification.test(userData.email) === false)
+            return
+
+        console.log(userData);
+    })
+
+}
 function loopOverLocalStorage() {
     for (let i = 0; i < localStorage.length; i++) {
         const getItem = localStorage.getItem(localStorage.key(i));
         const parsedItem = JSON.parse(getItem)
         cart.push(parsedItem)
 
-        injectArticle(parsedItem, i, cart)
+        injectArticle(parsedItem, i)
     }
 }
 
 let totalPrice = 0
 let cart = []
 loopOverLocalStorage()
+getUserDataAndVerify()
