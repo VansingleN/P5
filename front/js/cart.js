@@ -1,4 +1,14 @@
-function injectArticle(parsedItem, i) {
+function loopOverLocalStorage() {
+    for (let i = 0; i < localStorage.length; i++) {
+        const getItem = localStorage.getItem(localStorage.key(i));
+        const parsedItem = JSON.parse(getItem)
+        cart.push(parsedItem)
+
+        displayArticle(parsedItem, i)
+    }
+}
+
+function displayArticle(parsedItem, i) {
     const cart__item = document.createElement("article")
     cart__item.classList = "cart__item"
     cart__item.dataset.id = parsedItem.id
@@ -36,10 +46,10 @@ function displayDescription(parsedItem, i, cart__item) {
     let price = document.createElement("p")
     cart__item__content__description.append(name, color, price)
 
-    injectInputContainer(parsedItem, i, div__cart__item__content, price)
+    displayInputContainer(parsedItem, i, div__cart__item__content, price)
 }
 
-function injectInputContainer(parsedItem, i, div__cart__item__content, price) {
+function displayInputContainer(parsedItem, i, div__cart__item__content, price) {
     const divSettings = document.createElement("div")
     divSettings.classList = "cart__item__content__settings"
     div__cart__item__content.appendChild(divSettings)
@@ -71,12 +81,12 @@ function deleteProduct(parsedItem) {
     deleteProductFromCart(parsedItem)
     deleteProductFromStorage(parsedItem)
     deleteProductFromPage(parsedItem)
-    displayTotalProducts()
+    displayTotalProductsQuantity()
+    updateTotalCartPrice()
 }
 
 function deleteProductFromCart(parsedItem) {
     const productDeletion = cart.findIndex(product => product.id === parsedItem.id && product.color === parsedItem.color)
-    console.log("itemtodelete", productDeletion);
     cart.splice(productDeletion, 1)
 }
 function deleteProductFromStorage(parsedItem) {
@@ -96,7 +106,7 @@ function displayQuantity(divQuantity, parsedItem, price, i) {
     quantity.min = "1"
     quantity.max = "100"
     quantity.value = cart[i].quantity
-    quantity.addEventListener("change", () => updateTotalProducts(parsedItem.id, parsedItem.color, Number(quantity.value), i))
+    quantity.addEventListener("change", () => updateTotalProductsQuantity(parsedItem.id, parsedItem.color, Number(quantity.value), i))
     divQuantity.appendChild(quantity)
 
     getPriceFromBackend(quantity, price, i, parsedItem)
@@ -105,48 +115,64 @@ function displayQuantity(divQuantity, parsedItem, price, i) {
 function getPriceFromBackend(quantity, price, i, parsedItem) {
     fetch('http://localhost:3000/api/products')
         .then((res) => res.json())
-        .then((res) => displayAllPrices(quantity, price, res, i, parsedItem))
+        .then((res) => displayProductsIndividualPrices(quantity, price, res, i, parsedItem))
 }
 
-function displayAllPrices(quantity, price, res, i, parsedItem) {
+function displayProductsIndividualPrices(quantity, price, res, i, parsedItem) {
     const productWithPriceFromBack = cart.find(product => product.id === parsedItem.id && product.color === parsedItem.color)
     productWithPriceFromBack.price = res.find(product => product._id === parsedItem.id).price
-    console.log(productWithPriceFromBack);
     price.innerHTML = "Prix : " + quantity.value * cart[i].price + " €"
+    displayTotalCartPrice(parsedItem, i, quantity, price)
+}
+
+function displayTotalCartPrice(parsedItem, i, quantity, price) {
     const totalPriceContainer = document.querySelector("#totalPrice")
     totalPrice += parsedItem.quantity * cart[i].price
     totalPriceContainer.innerHTML = totalPrice
 
-    displayTotalProducts()
-    updateAllPrices(quantity, price, i)
+    displayTotalProductsQuantity()
+    updateProductsIndividualPrices(quantity, price, i)
 }
 
-function updateAllPrices(quantity, price, i) {
-
+function updateProductsIndividualPrices(quantity, price, i) {
     quantity.addEventListener('change', function () {
-        const totalPriceContainer = document.querySelector("#totalPrice")
         price.innerHTML = "Prix : " + quantity.value * cart[i].price + " €"
-        let modifiedTotalPrice = 0
-        cart.forEach((p) => modifiedTotalPrice += (p.price * p.quantity))
-        totalPriceContainer.innerHTML = modifiedTotalPrice
+        
+        updateTotalCartPrice()
     })
 }
 
-function displayTotalProducts() {
+function updateTotalCartPrice() {
+    const totalPriceContainer = document.querySelector("#totalPrice")
+    let modifiedTotalPrice = 0
+    cart.forEach((p) => modifiedTotalPrice += (p.price * p.quantity))
+    totalPriceContainer.innerHTML = modifiedTotalPrice
+}
+
+function displayTotalProductsQuantity() {
     const totalQuantity = document.querySelector("#totalQuantity")
     const total = cart.reduce((total, parsedItem) => total + Number(parsedItem.quantity), 0)
     totalQuantity.innerHTML = total
 }
 
-function updateTotalProducts(id, color, quantityValue) {
-    const modifyInCart = cart.find((product) => product.id === id && product.color === color)
-    modifyInCart.quantity = Number(quantityValue)
+function updateTotalProductsQuantity(id, color, quantityValue) {
+    const productInCart = cart.find((product) => product.id === id && product.color === color)
+    productInCart.quantity = Number(quantityValue)
 
-    displayTotalProducts()
+    updateProductQuantityInLocalStorage(productInCart, Number(quantityValue))
+    displayTotalProductsQuantity()
 }
 
+function updateProductQuantityInLocalStorage(productInCart, quantity) {
+    const idc = productInCart.id + productInCart.color
+    const productInStorage = localStorage.getItem(idc)
+    const parsedProduct = JSON.parse(productInStorage)
+    parsedProduct.quantity = quantity
+    const stringifiedProduct = JSON.stringify(parsedProduct)
+    localStorage.setItem(idc, stringifiedProduct)
+}
 
-function getUserDataAndVerify() {
+function getContactAndVerify() {
     const order = document.querySelector("#order")
     order.addEventListener("click", (event) => {
         event.preventDefault();
@@ -155,7 +181,7 @@ function getUserDataAndVerify() {
             return
         }
 
-        const userData = {
+        let contact = {
             firstName: document.querySelector("#firstName").value,
             lastName: document.querySelector("#lastName").value,
             address: document.querySelector("#address").value,
@@ -163,29 +189,30 @@ function getUserDataAndVerify() {
             email: document.querySelector("#email").value,
         }
 
-        if (userData.firstName === "") {
+        const globalVerification = /^[^!¡?÷¿/+=@#£¤µ¨§$%&*(){}|~<>;:[\]]+$/
+
+        if (globalVerification.test(contact.firstName) === false) {
             const firstNameErrorMsg = document.querySelector("#firstNameErrorMsg");
-            firstNameErrorMsg.innerHTML = "Veuillez entrer votre prénom"
+            firstNameErrorMsg.innerHTML = "Veuillez entrer un prénom valide"
         }
         else {
             firstNameErrorMsg.innerHTML = ""
         }
-        if (userData.lastName === "") {
+        if (globalVerification.test(contact.lastName) === false) {
             const lastNameErrorMsg = document.querySelector("#lastNameErrorMsg");
-            lastNameErrorMsg.innerHTML = "Veuillez entrer votre nom"
+            lastNameErrorMsg.innerHTML = "Veuillez entrer un nom valide"
         }
         else {
             lastNameErrorMsg.innerHTML = ""
         }
-        if (userData.address === "") {
+        if (globalVerification.test(contact.address) === false) {
             const addressErrorMsg = document.querySelector("#addressErrorMsg");
-            addressErrorMsg.innerHTML = "Veuillez entrer votre adresse"
+            addressErrorMsg.innerHTML = "Veuillez entrer une adresse valide"
         }
         else {
             addressErrorMsg.innerHTML = ""
         }
-        const cityVerification = /^[^!¡?÷¿/+=@#£¤µ¨§$%&*(){}|~<>;:[\]]+$/
-        if (cityVerification.test(userData.city) === false) {
+        if (globalVerification.test(contact.city) === false) {
             const cityErrorMsg = document.querySelector("#cityErrorMsg");
             cityErrorMsg.innerHTML = "Veuillez entrer un nom de ville valide"
         }
@@ -193,31 +220,50 @@ function getUserDataAndVerify() {
             cityErrorMsg.innerHTML = ""
         }
         const emailVerification = /.+@.+\..+/
-        if (emailVerification.test(userData.email) === false) {
+        if (emailVerification.test(contact.email) === false) {
             const emailErrorMsg = document.querySelector("#emailErrorMsg");
             emailErrorMsg.innerHTML = "Veuillez entrer une adresse mail valide"
         }
         else {
             emailErrorMsg.innerHTML = ""
         }
-        if (userData.firstName === "" || userData.lastName === "" || userData.address === "" || cityVerification.test(userData.city) === false || emailVerification.test(userData.email) === false)
+        if (globalVerification.test(contact.firstName) === false || globalVerification.test(contact.lastName) === false || globalVerification.test(contact.address) === false || globalVerification.test(contact.city) === false || emailVerification.test(contact.email) === false)
             return
 
-        console.log(userData);
+        let products = []
+        for (i = 0; i < cart.length; i++) {
+            products.push(cart[i].id)
+
+        }
+        const order = {
+            contact,
+            products,
+        }
+        setupRequest(order)
     })
-
 }
-function loopOverLocalStorage() {
-    for (let i = 0; i < localStorage.length; i++) {
-        const getItem = localStorage.getItem(localStorage.key(i));
-        const parsedItem = JSON.parse(getItem)
-        cart.push(parsedItem)
 
-        injectArticle(parsedItem, i)
+function setupRequest(order) {
+    const stringifiedOrder = {
+        method: "POST",
+        body: JSON.stringify(order),
+        headers: {
+            "Content-Type": "application/json"
+        }
     }
+    postRequest(stringifiedOrder)
+}
+
+function postRequest(stringifiedOrder) {
+    fetch("http://localhost:3000/api/products/order", stringifiedOrder)
+        .then(res => res.json())
+        .then(data => {
+            localStorage.setItem("orderId", data.orderId),
+                document.location.href = "confirmation.html?id=" + data.orderId
+        })
 }
 
 let totalPrice = 0
 let cart = []
 loopOverLocalStorage()
-getUserDataAndVerify()
+getContactAndVerify()
