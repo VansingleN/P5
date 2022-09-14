@@ -1,3 +1,4 @@
+// Récupération des données du produit se référant à l'ID de l'URL
 function getDataFromId() {
 
     const id = window.location.search
@@ -11,6 +12,7 @@ function getDataFromId() {
         .then(showColors)
 }
 
+// Fabrication de la balise image et appel de sa source (depuis l'API)
 function showImage(res) {
 
     const item__img = document.querySelector(".item__img");
@@ -22,6 +24,7 @@ function showImage(res) {
     return res
 }
 
+// Ajout du titre du produit ainsi que de son prix modifiable selon sa quantité (depuis l'API)
 function showTitleAndPrice(res) {
 
     const title = document.querySelector("#title")
@@ -35,6 +38,7 @@ function showTitleAndPrice(res) {
     return res
 }
 
+// Ajout de la description du produit (depuis l'API)
 function showDescription(res) {
 
     const description = document.querySelector("#description")
@@ -42,6 +46,7 @@ function showDescription(res) {
     return res
 }
 
+// Ajout de la couleur du produit (depuis l'API)
 function showColors(res) {
 
     res.colors.forEach(color => {
@@ -53,6 +58,7 @@ function showColors(res) {
     })
 }
 
+// Ajout du produit dans le panier et stockage de ses valeurs dans le localStorage
 function validatingCartAndStoringValues() {
 
     const addToCart = document.querySelector("#addToCart")
@@ -75,10 +81,13 @@ function validatingCartAndStoringValues() {
         }
         const idc = paramId + color
 
+// Ici une alerte en cas de panier vide
         if (color == "" || quantity == 0) {
             alert('Please choose a color and a quantity')
         }
 
+/* Ci-dessous on permet à l'utilisateur de d'ajouter une quantité d'un même produit depuis la page produit
+en vérifiant s'il existe déjà dans le localStorage et en incrémentant si nécessaire */
         else {
             let json = localStorage.getItem(idc)
 
@@ -98,6 +107,7 @@ function validatingCartAndStoringValues() {
     })
 }
 
+// Appels des deux fonctions principales
 getDataFromId()
 validatingCartAndStoringValues()
 

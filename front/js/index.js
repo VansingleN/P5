@@ -1,3 +1,4 @@
+// Utilisation de fetch pour récupérer le tableau de produits depuis l'API
 function getProductsFromBackend() {
       
       fetch('http://localhost:3000/api/products')
@@ -5,6 +6,15 @@ function getProductsFromBackend() {
             .then((res) => showProducts(res))
 }
 
+// Initialisation de la boucle for of afin de parcourir le tableau
+function showProducts(products) {
+
+      for (product of products) {
+            displayProduct(product)
+      }
+}
+
+// Fabrication et placement des produits en fonction de leur place dans le tableau
 function displayProduct(product) {
 
       const items = document.querySelector("#items")
@@ -30,13 +40,7 @@ function displayProduct(product) {
       article.appendChild(paragraph)
 }
 
-function showProducts(products) {
-
-      for (product of products) {
-            displayProduct(product)
-      }
-}
-
+// Appel de la fonction initiale
 getProductsFromBackend()
 
 
